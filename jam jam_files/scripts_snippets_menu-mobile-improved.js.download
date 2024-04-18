@@ -1,0 +1,290 @@
+/** Shopify CDN: Minification failed
+
+Line 17:4 Transforming const to the configured target environment ("es5") is not supported yet
+Line 53:4 Transforming const to the configured target environment ("es5") is not supported yet
+Line 54:8 Transforming let to the configured target environment ("es5") is not supported yet
+Line 55:8 Transforming let to the configured target environment ("es5") is not supported yet
+Line 56:8 Transforming let to the configured target environment ("es5") is not supported yet
+Line 65:4 Transforming const to the configured target environment ("es5") is not supported yet
+Line 70:4 Transforming const to the configured target environment ("es5") is not supported yet
+Line 71:8 Transforming let to the configured target environment ("es5") is not supported yet
+Line 72:8 Transforming let to the configured target environment ("es5") is not supported yet
+Line 76:8 Transforming let to the configured target environment ("es5") is not supported yet
+... and 21 more hidden warnings
+
+**/
+$(function(){
+    const menuMobileImprovedSettings = {
+        classes: {
+            menuMobileImprovedClass: 'menu-mobile-improved--STATUS',
+            navLinkIconStatusClass: "menu-mobile-improved__nav-icon--STATUS",
+            navItem: "menu-mobile-improved__nav-item--PLACEHOLDER"
+        },
+        selectors: {
+            customLogoContainerSelector: '.custom-logo-container',
+            headerContentSelector: '#shopify-section-header #header.header',
+            headerStickyContentSelector: '#shopify-section-header .header.header-drop',
+            menuMobileImprovedSelector: '.menu-mobile-improved',
+            navItemWithDropdown: '.menu-mobile-improved__nav-item--has-dropdown',
+            navLinkIconSelector: '.menu-mobile-improved__nav-icon',
+            navLinkSelector: '.menu-mobile-improved__nav-link',
+            oldMenuButtonSelector: '.menu-mobile-button',
+            oldMenuSelector: '#menu-mobile',
+            sliderContainerSelector: '.menu-mobile-improved__sub-nav-items-container',
+            specificNavItemSelector: '.menu-mobile-improved__nav-item.menu-mobile-improved__nav-item--has-dropdown[data-item-index="PLACEHOLDER"]',
+            specificNavItemNotSelector: `.menu-mobile-improved__nav-item.menu-mobile-improved__nav-item--has-dropdown:not([data-item-index="PLACEHOLDER"])`,
+            subLinkContainerSelector: `.menu-mobile-improved__sub-link-container`,
+            utilityBarSelector: `#header .utility-bar`
+        },
+        htmlElements: {
+            navLink: `<a class="menu-mobile-improved__nav-link" data-status="closed">
+                        <div class="menu-mobile-improved__nav-icon menu-mobile-improved__nav-icon--closed">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div
+                    </a>`
+        },
+        strings: {
+        }
+    }
+
+    const navTopPosition = function(type){
+        let fixedHeaderContentHeight = document.querySelector(`${menuMobileImprovedSettings.selectors.headerContentSelector}`).offsetHeight ;
+        let stickyHeaderContentHeight = document.querySelector(`${menuMobileImprovedSettings.selectors.headerStickyContentSelector}`).offsetHeight;        
+        let headerContentHeight = window.scrollY > fixedHeaderContentHeight ? stickyHeaderContentHeight : fixedHeaderContentHeight - window.scrollY;
+        
+        if(type == "utility-bar-close"){
+            headerContentHeight = stickyHeaderContentHeight
+        }
+
+        document.querySelector(`${menuMobileImprovedSettings.selectors.menuMobileImprovedSelector}`).style.top = `${headerContentHeight}px`
+    }
+
+    const initNavStyling = function(type){
+        navTopPosition(type);
+        // handleNavLinkClick('click outside');
+    }
+
+    const handleNavLinkClick = function(type){
+        let navLinks = document.querySelectorAll(`${menuMobileImprovedSettings.selectors.navLinkSelector}`);
+        let menu = document.querySelector(`${menuMobileImprovedSettings.selectors.menuMobileImprovedSelector}`);
+
+        menu.classList.remove(`${menuMobileImprovedSettings.classes.menuMobileImprovedClass.replace('STATUS', 'closed')}`);
+        menu.classList.remove(`${menuMobileImprovedSettings.classes.menuMobileImprovedClass.replace('STATUS', 'open')}`);
+        let newStatus = menu.getAttribute('data-status') == 'closed' ? 'open' : 'closed'; 
+
+        if(type == 'click outside') {
+            newStatus = 'closed'
+        };
+
+        navLinks.forEach((navLink) => {
+            navLink.style.pointerEvents = "none";
+
+            let navLinkIcon = navLink.querySelector(`${menuMobileImprovedSettings.selectors.navLinkIconSelector}`);
+
+            navLinkIcon.classList.remove(`${menuMobileImprovedSettings.classes.navLinkIconStatusClass.replace('STATUS', 'closed')}`);
+            navLinkIcon.classList.remove(`${menuMobileImprovedSettings.classes.navLinkIconStatusClass.replace('STATUS', 'open')}`);
+
+
+            navLink.setAttribute('data-status', `${newStatus}`);
+            navLinkIcon.classList.add(`${menuMobileImprovedSettings.classes.navLinkIconStatusClass.replace('STATUS', newStatus)}`);
+        
+            setTimeout(function () {
+                navLink.style.pointerEvents = "";
+            }, 200);
+        
+        });
+
+        menu.setAttribute('data-status', `${newStatus}`);
+        menu.classList.add(`${menuMobileImprovedSettings.classes.menuMobileImprovedClass.replace('STATUS', newStatus)}`)
+        let html = document.querySelector('#page').closest('html');
+
+        if(newStatus == 'open'){
+            html.style.overflow = `hidden` 
+        } else {
+            html.style.overflow = `` 
+        }
+    
+    }
+
+    const insertNavIcon = function(){
+        let customLogoContainers = document.querySelectorAll(`${menuMobileImprovedSettings.selectors.customLogoContainerSelector}`);
+        if(customLogoContainers.length > 0){
+            customLogoContainers.forEach((customLogoContainer) => {
+                customLogoContainer.insertAdjacentHTML('afterbegin', menuMobileImprovedSettings.htmlElements.navLink);
+                customLogoContainer.querySelector(`${menuMobileImprovedSettings.selectors.navLinkSelector}`).addEventListener('click', () => handleNavLinkClick('click'))
+            })
+        }
+    }
+
+    const menuMobileThrottle = function(func) {
+        var timer;
+        return function(event) {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(func, 250, event);
+        };
+    };
+
+    const handleNavItemClick = function(e, type, itemIndex){
+        e.preventDefault();
+        console.log(e, type, itemIndex)
+
+        let targetItem = type == 'click_outside' ?  document.querySelectorAll(`${menuMobileImprovedSettings.selectors.specificNavItemSelector.replace('PLACEHOLDER', '1')}`)[0] : document.querySelectorAll(`${menuMobileImprovedSettings.selectors.specificNavItemSelector.replace('PLACEHOLDER', `${itemIndex}`)}`)[0];
+        let value = type == 'click_outside' ? 'open' : targetItem.getAttribute('data-status');
+        let index = targetItem.getAttribute('data-item-index');
+        let items = document.querySelectorAll(`${menuMobileImprovedSettings.selectors.specificNavItemSelector.replace('PLACEHOLDER', `${index}`)}`);
+        let allOtherItems = document.querySelectorAll(`${menuMobileImprovedSettings.selectors.specificNavItemNotSelector.replace('PLACEHOLDER', `${index}`)}`);
+        let newValue = value == 'closed' ? 'open' : 'closed';
+       
+        console.log('targetItem', value, targetItem, items, allOtherItems, newValue)
+
+        items.forEach((item) => {
+            let itemSubLinkContainer = item.querySelector(`${menuMobileImprovedSettings.selectors.subLinkContainerSelector}`);
+
+            if(allOtherItems.length > 0) {
+                allOtherItems.forEach((singleItem) => {
+                    let singleItemSubLinkContainer = singleItem.querySelector(`${menuMobileImprovedSettings.selectors.subLinkContainerSelector}`);
+
+                  
+                    if(singleItemSubLinkContainer){
+                        singleItemSubLinkContainer.setAttribute('data-status', "closed");
+                        setTimeout(function () {
+                            singleItem.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'open')}`);
+                            singleItem.classList.add(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'closed')}`);
+                            singleItem.setAttribute('data-status', 'closed');
+                        }, 200);
+                    } 
+                    else {
+                        singleItem.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'open')}`);
+                        singleItem.classList.add(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'closed')}`);
+                        singleItem.setAttribute('data-status', 'closed');
+                    }
+                    // singleItem.closest(`${stickyATCSettings.selectors.openCloseButtonContainerSelector}`).setAttribute('data-value', 'closed');
+                })
+            }
+
+
+            item.style.pointerEvents = "none";
+            if(itemSubLinkContainer && newValue == "closed"){
+                itemSubLinkContainer.setAttribute('data-status', newValue);
+                setTimeout(function () {
+                    item.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'open')}`);
+                    item.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'closed')}`);
+                    item.setAttribute('data-status', newValue);
+                    // button.closest(`${menuMobileImprovedSettings.selectors.openCloseButtonContainerSelector}`).setAttribute('data-value', newValue);
+                    item.classList.add(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', newValue)}`);
+                    setTimeout(function () {
+                        item.style.pointerEvents = "";
+                    }, 200);
+
+                }, 200);
+            } else if(itemSubLinkContainer && newValue == "open") {
+                item.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'open')}`);
+                item.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'closed')}`);
+                item.setAttribute('data-status', newValue);
+                // button.closest(`${menuMobileImprovedSettings.selectors.openCloseButtonContainerSelector}`).setAttribute('data-value', newValue);
+                item.classList.add(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', newValue)}`);
+                
+
+                setTimeout(function () {
+                    if(itemSubLinkContainer && newValue == "open"){
+                        itemSubLinkContainer.setAttribute('data-status', newValue);
+                        setTimeout(function () {
+                            item.style.pointerEvents = "";
+                        }, 200);
+                    }
+                }, 200);
+            } else {
+                item.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'open')}`);
+                item.classList.remove(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', 'closed')}`);
+                item.setAttribute('data-status', newValue);
+                // button.closest(`${menuMobileImprovedSettings.selectors.openCloseButtonContainerSelector}`).setAttribute('data-value', newValue);
+                item.classList.add(`${menuMobileImprovedSettings.classes.navItem.replace('PLACEHOLDER', newValue)}`);                
+                        setTimeout(function () {
+                            item.style.pointerEvents = "";
+                        }, 200);
+
+            }
+        })
+      
+    }
+
+    const initUtilityBarObserver = function(){
+        let utilityBar = document.querySelector(`${menuMobileImprovedSettings.selectors.utilityBarSelector}`);
+        let mutating = false;
+
+        var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === "attributes" && mutating == false) {
+                    mutating = true;
+                    initNavStyling('utility-bar-close')
+                    setTimeout(function() {
+                        mutating = false;
+                    }, 500);
+                }
+            });
+        });
+    
+        if(utilityBar){
+            observer.observe(utilityBar, {attributes: true});
+        }
+    }
+
+    const initNavItemSlider = function(navItemIndex){
+        // const sliderContainer = navItemWithDropdown.querySelector(`${menuMobileImprovedSettings.selectors.sliderContainerSelector}`);
+    	// $(`${menuMobileImprovedSettings.selectors.sliderContainerSelector}[data-item-index="${navItemIndex}"]`).slick({
+        //     autoplay: false,
+        //     slidesToShow: 2.5,
+        //     mobileFirst: true,
+        //     arrows: false,
+        //     infinite: false,
+        //     dots: false,
+        //     touchThreshold:100,
+        //     cssEase: 'ease-out',
+        //     useTransform: true,
+        //     slidesToScroll:1,
+
+        //   });
+
+          var swiper = new Swiper(`${menuMobileImprovedSettings.selectors.sliderContainerSelector}[data-item-index="${navItemIndex}"]`, {
+            slidesPerView: 2.5,
+            spaceBetween: 20,
+            freeMode: true
+          });
+
+    }
+
+    const initNavItemState = function(){
+        let navItemsWithDropdown = document.querySelectorAll(`${menuMobileImprovedSettings.selectors.navItemWithDropdown}`);
+        if(navItemsWithDropdown.length > 0){
+            navItemsWithDropdown.forEach((navItemWithDropdown) => {
+                navItemWithDropdown.querySelector('.menu-mobile-improved__nav-item-link').addEventListener('click', function(e){
+                        handleNavItemClick(e, 'click', parseInt(navItemWithDropdown.getAttribute('data-item-index')))
+                    }
+                )
+            initNavItemSlider(navItemWithDropdown.getAttribute('data-item-index'));
+            })
+        }
+
+    }
+
+    const initMenuMobileImproved = function(){
+           insertNavIcon();
+           initNavItemState(); 
+           if (document.readyState !== 'loading') {
+            initNavStyling();
+            initUtilityBarObserver();
+           } else {
+            window.addEventListener("DOMContentLoaded", function() {
+                initNavStyling();
+                initUtilityBarObserver();
+            });
+           }
+            window.addEventListener("resize", menuMobileThrottle(() => initNavStyling()));
+            window.addEventListener("scroll", menuMobileThrottle(() => initNavStyling()));    
+    }
+
+    window.onload = initMenuMobileImproved();
+});

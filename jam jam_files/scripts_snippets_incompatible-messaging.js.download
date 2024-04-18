@@ -1,0 +1,181 @@
+/** Shopify CDN: Minification failed
+
+Line 20:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 21:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 22:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 23:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 24:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 26:4 Transforming let to the configured target environment ("es5") is not supported yet
+Line 27:13 Transforming let to the configured target environment ("es5") is not supported yet
+Line 36:8 Transforming let to the configured target environment ("es5") is not supported yet
+Line 37:8 Transforming let to the configured target environment ("es5") is not supported yet
+Line 38:13 Transforming const to the configured target environment ("es5") is not supported yet
+... and 23 more hidden warnings
+
+**/
+window.Branch = window.Branch || {};
+window.Branch.cart = window.Branch.cart || {};
+
+window.Branch.cart.checkForMismatchedProducts = function(item, compatibleWithArray, type){
+    let addOnVariantMatches = JSON.parse(document.querySelector(`#addon-variant-matches`).innerText);
+    let mismatched = true;
+    let productOptions = item.getAttribute('data-options').split(",");
+    let productOptionValues = item.getAttribute('data-option-values').split(",");
+    let itemHandle = item.getAttribute('data-product-handle');
+
+    let findIndex = function(arr, targetValue) {
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i] === targetValue) {
+                return i;
+            }
+        }
+        // If the value is not found, return -1
+        return -1;
+        }
+        compatibleWithArray.forEach((compatibleHandle) => {
+        let variantMatches = undefined;
+        let productExistsInAddOnVariantMatches = false;
+        for (const [handle, matchData] of Object.entries(addOnVariantMatches)) {
+            if(compatibleHandle === handle){
+            matchData.forEach((matchDataEntry) => {
+                if(itemHandle === matchDataEntry['add-on-handle']){
+                    variantMatches = matchDataEntry['variant-matches'];
+                    productExistsInAddOnVariantMatches = true;
+                }
+            })
+            }
+        }
+
+        if(productExistsInAddOnVariantMatches == false){
+            mismatched = false;
+        } else {
+            mismatched = true;
+        }
+
+        if(variantMatches && mismatched == true){
+            let matchesFullfilled = 0;
+            let nonCompulsoryMatchConditions = 0;
+            let nonCompulsoryMatchConditionsMet = false;
+
+            variantMatches.forEach((variantMatch) => {
+                if(variantMatch['match-not-required-if-other-options-match'] == true) {
+                    nonCompulsoryMatchConditions = nonCompulsoryMatchConditions + 1;
+                }
+            });
+            variantMatches.forEach((variantMatch) => {
+                productOptions.forEach((productOption, index) => {
+                    if(variantMatch['add-on-option-name'].toLowerCase().replace(' ', '-') == productOption ){
+                    let value = item.querySelector('.variants').getAttribute(`${productOption}`);
+                    let variantsIdArray = [];
+                    let compatibleItems = type == "side-cart" ? document.querySelectorAll(`#side-cart .cart-items .item[data-product-handle="${compatibleHandle}"]`) : document.querySelectorAll(`#cart #cartform .items .item[data-product-handle="${compatibleHandle}"]`); 
+                    compatibleItems.forEach((compatibleItem) => {
+                        if(!variantsIdArray.includes(compatibleItem.getAttribute('data-variant-id'))){
+                            let valueFromVariantsElement = compatibleItem.querySelector('.variants').getAttribute(`${variantMatch['option-name'].toLowerCase().replace(' ', '-')}`);
+                            let matchValue = valueFromVariantsElement;
+                            if(variantMatch['non-identical-values-to-match'] && variantMatch['non-identical-values-to-match'].length > 0){
+                                let optionIndex = findIndex(productOptions, productOption);
+                                let productOptionValue = productOptionValues[`${optionIndex}`].replaceAll('@', ',')
+                                variantMatch['non-identical-values-to-match'].forEach((nonIdenticalMatch) => {
+                                    if(nonIdenticalMatch['value'] == valueFromVariantsElement && nonIdenticalMatch['add-on-value'] == productOptionValue){
+                                        matchValue = nonIdenticalMatch['add-on-value'];
+                                        matchesFullfilled = matchesFullfilled + 1;
+                                    }
+                                })
+                            }
+
+                            else if(value === matchValue){
+                                if(variantMatch['match-not-required-if-other-options-match'] == true && nonCompulsoryMatchConditionsMet == false){
+                                    matchesFullfilled = matchesFullfilled + nonCompulsoryMatchConditions;
+                                    nonCompulsoryMatchConditionsMet = true;
+                                } else if(!variantMatch['match-not-required-if-other-options-match']) {
+                                    matchesFullfilled = matchesFullfilled + 1;
+                                }
+                            } 
+
+                            variantsIdArray.push(compatibleItem.getAttribute('data-variant-id'));
+                        }
+                    });
+                }
+            })
+        })
+
+
+        if(matchesFullfilled >= variantMatches.length){
+        mismatched = false;
+        }
+        // console.log('mismatched', mismatched, 'matchesFullfilled', matchesFullfilled, 'variantMatches.length', variantMatches.length)
+
+        if(mismatched){
+            let mismatchedHTML = `<div class="${type == 'side-cart' ? 'side-cart' : 'cart-page'}-incompatible-warning-container"><svg aria-hidden="true" tabindex="-1" role="presentation" class=" icon icon-exclamation-mark-circle" viewBox="0 0 32 32"><circle cx="16.2521" cy="16.5881" r="16" fill="#A72100"></circle><path fill="white" d="M16.2679 19.7261C15.7692 19.7261 15.4979 19.4474 15.4539 18.8901L14.8159 10.7941C14.7865 10.3394 14.9039 9.95807 15.1679 9.65007C15.4465 9.34207 15.8059 9.18807 16.2459 9.18807C16.6859 9.18807 17.0452 9.34207 17.3239 9.65007C17.6025 9.95807 17.7199 10.3394 17.6759 10.7941L17.0599 18.8901C17.0159 19.4474 16.7519 19.7261 16.2679 19.7261ZM16.1139 24.5881C15.6885 24.5881 15.3585 24.4781 15.1239 24.2581C14.9039 24.0234 14.7939 23.6934 14.7939 23.2681V22.8941C14.7939 22.4687 14.9039 22.1461 15.1239 21.9261C15.3585 21.6914 15.6885 21.5741 16.1139 21.5741H16.3999C16.8252 21.5741 17.1479 21.6914 17.3679 21.9261C17.6025 22.1461 17.7199 22.4687 17.7199 22.8941V23.2681C17.7199 23.6934 17.6025 24.0234 17.3679 24.2581C17.1479 24.4781 16.8252 24.5881 16.3999 24.5881H16.1139Z"></path></svg> <p>&nbsp; &nbsp; &nbsp;<strong>Are you sure?</strong> This add-on color/size doesn't match with the other products in your cart.</p></div>`;
+            let warningContainer = type == 'side-cart' ? item.querySelector('.grid__item.two-thirds') : item.querySelector('.variants-edit-wrap') 
+            warningContainer.insertAdjacentHTML('beforeend', mismatchedHTML);
+        }
+    }
+    });
+    
+}
+
+
+window.Branch.cart.incompatibleProducts = function(cartContents, type){
+    let productHandles = [];
+    if(cartContents.length > 0){
+    cartContents.forEach((cartContent) => {
+        productHandles.push(cartContent.handle);
+    })
+    }
+    
+    let items = type == 'side-cart' ? document.querySelectorAll('#side-cart .cart-items .item') : document.querySelectorAll('#cart #cartform .items .item');
+    items.forEach((item) => {
+    if(item.getAttribute('data-compatible-with') && item.getAttribute('data-compatible-with') != ''){
+        let itemInCategoryExists  = false;
+        if(item.getAttribute('data-category-specified') && item.getAttribute('data-category-specified') != ''){
+            let category = item.getAttribute('data-category-specified');
+            items.forEach((itemForCategory) => {
+                if(itemForCategory.getAttribute('data-variant-id') !== item.getAttribute('data-variant-id')){
+                    if(category == itemForCategory.getAttribute('data-product-type')){
+                        itemInCategoryExists = true;
+                    }
+                }
+            })
+        } else {
+            itemInCategoryExists  = true;
+        }
+
+        console.log('itemInCategoryExists', itemInCategoryExists)
+
+        if(itemInCategoryExists){
+            let compatibleWithArray = item.getAttribute('data-compatible-with').split(",");
+            let showWarning = true;
+            productHandles.forEach((productHandle) => {
+            compatibleWithArray.forEach((compatibleWithHandle) => {
+                if(productHandle === compatibleWithHandle){
+                showWarning = false;
+                }
+            })
+            });
+
+            if(showWarning){
+            let warningContainer = type == 'side-cart' ? item.querySelector('.grid__item.two-thirds') : item.querySelector('.variants-edit-wrap') 
+            let warningHTML = `<div class="${type == 'side-cart' ? 'side-cart' : 'cart-page'}-incompatible-warning-container"><svg aria-hidden="true" tabindex="-1" role="presentation" class=" icon icon-exclamation-mark-circle" viewBox="0 0 32 32"><circle cx="16.2521" cy="16.5881" r="16" fill="#A72100"></circle><path fill="white" d="M16.2679 19.7261C15.7692 19.7261 15.4979 19.4474 15.4539 18.8901L14.8159 10.7941C14.7865 10.3394 14.9039 9.95807 15.1679 9.65007C15.4465 9.34207 15.8059 9.18807 16.2459 9.18807C16.6859 9.18807 17.0452 9.34207 17.3239 9.65007C17.6025 9.95807 17.7199 10.3394 17.6759 10.7941L17.0599 18.8901C17.0159 19.4474 16.7519 19.7261 16.2679 19.7261ZM16.1139 24.5881C15.6885 24.5881 15.3585 24.4781 15.1239 24.2581C14.9039 24.0234 14.7939 23.6934 14.7939 23.2681V22.8941C14.7939 22.4687 14.9039 22.1461 15.1239 21.9261C15.3585 21.6914 15.6885 21.5741 16.1139 21.5741H16.3999C16.8252 21.5741 17.1479 21.6914 17.3679 21.9261C17.6025 22.1461 17.7199 22.4687 17.7199 22.8941V23.2681C17.7199 23.6934 17.6025 24.0234 17.3679 24.2581C17.1479 24.4781 16.8252 24.5881 16.3999 24.5881H16.1139Z"></path></svg> <p>&nbsp; &nbsp; &nbsp;<strong>Are you sure?</strong> This add-on isn’t compatible with the other products in your cart.</p></div>`;
+            warningContainer.insertAdjacentHTML('beforeend', warningHTML);
+            } else {
+                window.Branch.cart.checkForMismatchedProducts(item, compatibleWithArray, type);
+            }
+        }
+    }
+    })
+}
+
+window.Branch.cart.productWarnings = function(cartContents, type){
+    if(cartContents.length > 1){
+        let warningContainers = type == 'side-cart' ? document.querySelectorAll('.side-cart-incompatible-warning-container') : document.querySelectorAll('.cart-page-incompatible-warning-container');
+        
+        if(warningContainers.length > 0){
+        warningContainers.forEach(warningContainer => {
+            warningContainer.remove();
+        });
+        }
+        window.Branch.cart.incompatibleProducts(cartContents, type);
+    }
+    
+}
