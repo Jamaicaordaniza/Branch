@@ -1,0 +1,2 @@
+function isVisible(elem){const windowScrollY=window.scrollY,{top,bottom}=elem.getBoundingClientRect();return!(top<0)}
+//# sourceMappingURL=/cdn/shop/t/29/assets/helixian.js.map?v=42368272298447234011660303374
